@@ -26,6 +26,7 @@
 		32F5854628441F6E00B43B7A /* WordChecker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = WordChecker; sourceTree = BUILT_PRODUCTS_DIR; };
 		32F5854928441F6E00B43B7A /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		32F58550284422B600B43B7A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		32F585572844239B00B43B7A /* Libraries */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Libraries; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +60,7 @@
 		32F5854828441F6E00B43B7A /* WordChecker */ = {
 			isa = PBXGroup;
 			children = (
+				32F585572844239B00B43B7A /* Libraries */,
 				32F5854928441F6E00B43B7A /* main.c */,
 			);
 			path = WordChecker;
