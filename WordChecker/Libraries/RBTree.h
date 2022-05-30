@@ -10,4 +10,24 @@
 
 #include <stdio.h>
 
+enum treeColor{
+    RED = 0,
+    BLAKC = 1
+};
+
+typedef struct rbnode{
+    
+    char key;
+    int count;
+    treeColor color;
+    
+    struct rbnode *parent,*left,*right;
+    
+}*t_rbnode;
+
+void leftRoatate(t_rbnode *tree,t_rbnode x);
+void rightRotation(t_rbnode *tree,t_rbnode y);
+void insert(t_rbnode *tree,t_rbnode newNode);
+
+
 #endif /* RBTree_h */
