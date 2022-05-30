@@ -19,7 +19,7 @@ typedef struct rbnode{
     
     char key;
     int count;
-    treeColor color;
+    enum treeColor color;
     
     struct rbnode *parent,*left,*right;
     
