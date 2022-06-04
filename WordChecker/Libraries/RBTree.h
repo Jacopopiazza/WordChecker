@@ -28,6 +28,8 @@ typedef struct rbnode{
 void leftRoatate(t_rbnode *tree,t_rbnode x);
 void rightRoatate(t_rbnode *tree,t_rbnode y);
 void insert(t_rbnode *tree,t_rbnode newNode);
+void insertFixUp(t_rbnode *tree, t_rbnode newNode);
+
 
 
 #endif /* RBTree_h */
