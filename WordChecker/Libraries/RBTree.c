@@ -32,7 +32,7 @@ void leftRoatate(t_rbnode *tree,t_rbnode x){
     x->parent = y;
 }
 
-void rightRotation(t_rbnode *tree,t_rbnode y){
+void rightRoatate(t_rbnode *tree,t_rbnode y){
     t_rbnode x = y->left;
     y->left = x->right;
     
@@ -96,5 +96,51 @@ void insert(t_rbnode *tree,t_rbnode newNode){
 
 
 void insertFixUp(t_rbnode *tree, t_rbnode newNode){
+        
+    while(newNode->parent->color == RED){
+        
+        if(newNode->parent->parent->left == p){//p is a left child
+            
+            if(newNode->parent->parent->right->color == RED){
+                newNode->parent->color = BLACK;
+                newNode->parent->parent->right->color = BLACK;
+                newNode->parent->parent->color = RED;
+                newNode = newNode->parent->parent;
+            }
+            else{
+                if(newNode->parent->right == newNode){
+                    newNode = newNode->parent;
+                    leftRotate(tree,newNode);
+                }
+                newNode->parent->color = BLACK;
+                newNode->parent->parent->color = RED;
+                rightRotate(tree,newNode->parent->parent);
+            }
+            
+        }
+        else{
+            if(newNode->parent->parent->left->color == RED){
+                newNode->parent->parent->left->color = BLACK;
+                newNode->parent->color = BLACK;
+                newNode->parent->parent->color = RED;
+                newNode = newNode->parent->parent;
+            }
+            else{
+                if(newNode == newNode->parent->left){
+                    newNode = newNode->parent;
+                    rightRotate(tree,newNode);
+                }
+                newNode->parent->color = BLACK;
+                newNode->parent->parent->color = RED;
+                leftRotate(tree,newNode->parent->parent);
+            }
+                                        
+        }
+        if(newNode == tree){
+            break;
+        }
+    }
+    tree->color = BLACK;
+    
     
 }

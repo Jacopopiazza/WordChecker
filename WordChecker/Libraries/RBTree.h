@@ -26,7 +26,7 @@ typedef struct rbnode{
 }*t_rbnode;
 
 void leftRoatate(t_rbnode *tree,t_rbnode x);
-void rightRotation(t_rbnode *tree,t_rbnode y);
+void rightRoatate(t_rbnode *tree,t_rbnode y);
 void insert(t_rbnode *tree,t_rbnode newNode);
 
 
