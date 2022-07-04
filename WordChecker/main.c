@@ -6,10 +6,26 @@
 //
 
 #include <stdio.h>
-#include "Libraries/RBTree.h"
+#include "Dictionary.h"
+
 
 int main(int argc, const char * argv[]) {
     // insert code here...
-    printf("Hello, World!\n");
+
+    t_node* tree = (t_node*)malloc(sizeof(t_node));
+
+    tree->hasChild = 0;
+    tree->matches = 1;
+    for(int i=0;i<N;i++){
+        tree->pointers[i] = NULL;
+    }
+    
+    addWordToTree(tree, "c_a5");
+    addWordToTree(tree, "CASA");
+    addWordToTree(tree, "CASO");
+    addWordToTree(tree, "NOIA");
+    
+    printWords(tree, 4);
+    
     return 0;
 }
