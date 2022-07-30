@@ -27,4 +27,9 @@ int addWordToTree(t_node* tree, const char* word);
 void printWords(t_node* tree,int wordLen);
 void printWordsRecCall(t_node *tree,int wordLen,int step,char *buffer);
 
+int countWords(t_node* tree,int wordLen);
+void countWordsRecCall(t_node *tree,int wordLen,int step,char *buffer,int *count);
+
+
+
 #endif /* Dictionary_h */

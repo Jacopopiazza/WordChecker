@@ -55,10 +55,12 @@ void printWords(t_node* tree,int wordLen){
         return;
     }
     
-    char* buffer = malloc(sizeof(char) * wordLen);
+    /*char* buffer = malloc(sizeof(char) * wordLen);
     for(int i=0;i<wordLen;i++){
         buffer[i] = '\0';
-    }
+    }*/
+    
+    char* buffer = calloc(wordLen, sizeof(char));
     
     for(int i=0;i<N;i++){
         //Rec call
@@ -73,7 +75,7 @@ void printWords(t_node* tree,int wordLen){
 }
 
 void printWordsRecCall(t_node *tree,int wordLen,int step,char *buffer){
-    if(step >= wordLen){
+    if(step >= wordLen && tree->matches == 1){
         printf("%s\n",buffer);
         return;
     }
@@ -83,6 +85,53 @@ void printWordsRecCall(t_node *tree,int wordLen,int step,char *buffer){
         buffer[step] = indexToChar(i);
         if(tree->pointers[i] != NULL && tree->matches == 1 && tree->hasChild == 1){
             printWordsRecCall(tree->pointers[i], wordLen, step+1, buffer);
+        }
+    }
+    
+    
+}
+
+int countWords(t_node* tree,int wordLen){
+    
+    if(tree == NULL || tree->hasChild == 0){
+        return 0;
+    }
+    
+    /*char* buffer = malloc(sizeof(char) * wordLen);
+    for(int i=0;i<wordLen;i++){
+        buffer[i] = '\0';
+    }*/
+    
+    char* buffer = calloc(wordLen, sizeof(char));
+    
+    int *count = malloc(sizeof(int));
+    *count = 0;
+    
+    for(int i=0;i<N;i++){
+        //Rec call
+        buffer[0] = indexToChar(i);
+        if(tree->pointers[i] != NULL && tree->matches == 1 && tree->hasChild == 1){
+            countWordsRecCall(tree->pointers[i],wordLen,1,buffer,count);
+        }
+        
+        
+    }
+    int val = *count;
+    free(count);
+    return val;
+}
+
+void countWordsRecCall(t_node *tree,int wordLen,int step,char *buffer,int *count){
+    if(step >= wordLen && tree->matches == 1){
+        (*count)++;
+        return;
+    }
+    
+    for(int i=0;i<N;i++){
+        //Rec call
+        buffer[step] = indexToChar(i);
+        if(tree->pointers[i] != NULL && tree->matches == 1 && tree->hasChild == 1){
+            countWordsRecCall(tree->pointers[i], wordLen, step+1, buffer,count);
         }
     }
     
