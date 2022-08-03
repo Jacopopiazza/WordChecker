@@ -66,6 +66,7 @@ void printWords(t_node* tree,int wordLen){
 
     char* buffer = calloc(wordLen, sizeof(char));
     
+    
     for(size_t i=0;i<N;i++){
         //Rec call
         buffer[0] = indexToChar(i);
@@ -79,10 +80,14 @@ void printWords(t_node* tree,int wordLen){
 }
 
 void printWordsRecCall(t_node *tree,int wordLen,int step,char *buffer){
-    if(step >= wordLen && tree->matches == 1){
-        printf("%s\n",buffer);
+    
+    if(step == wordLen){
+        if(tree->matches){
+            printf("%s\n",buffer);
+        }
         return;
     }
+    
     
     for(size_t i=0;i<N;i++){
         //Rec call
@@ -136,6 +141,67 @@ int addWordToTree(t_node* tree, const char* word){
         i++;
     }
 
+    return 1;
+    
+}
+
+int addWordToTreeFiltered(t_node* tree, const char* word,int wordLen,char charMatches[N][wordLen],int charOccurrencies[N],char charExact[N]){
+    
+    
+    if(tree == NULL){
+        tree = (t_node*)malloc(sizeof(t_node));
+        if(tree == NULL){
+            return 0;
+        }
+        tree->hasChild = 0;
+        tree->matches = 1;
+        for(size_t i=0;i<N;i++){
+            tree->pointers[i] = NULL;
+        }
+    }
+    
+    int len = (int)strlen(word);
+    int i = 0;
+    int currentWord[N] = {0};
+    t_node* curr = tree;
+    
+    while(i<len){
+        
+        char c = word[i];
+        int index = charToIndex(c);
+        currentWord[index]++;
+        
+        if (curr->pointers[index] == NULL){
+            if(curr->hasChild == 0){
+                curr->hasChild = 1;
+            }
+            curr->pointers[index] = (t_node*)malloc(sizeof(t_node));
+            if( curr->pointers[index] == NULL){
+                return 0;
+            }
+            curr->pointers[index]->hasChild = 0;
+            curr->pointers[index]->matches = 1;
+            
+            if(!charMatches[index][i] || (currentWord[index] > charOccurrencies[index] && charExact[index])){
+                curr->pointers[index]->matches = 0;
+            }
+                        
+            for(size_t i=0;i<N;i++){
+                curr->pointers[index]->pointers[i] = NULL;
+            }
+        }
+                
+        curr = curr->pointers[index];
+        i++;
+    }
+
+    for(size_t j = 0;j<N;j++){
+        if(currentWord[j] < charOccurrencies[j]){
+            curr->matches = 0;
+            break;
+        }
+    }
+    
     return 1;
     
 }

@@ -37,6 +37,6 @@ void filterTreeRecCall(t_node* tree,int wordLen,int step,t_occurrence occurrenci
 int countWords(t_node* tree,int wordLen);
 void countWordsRecCall(t_node *tree,int wordLen,int step,char *buffer,int *count);
 
-
+int addWordToTreeFiltered(t_node* tree, const char* word,int wordLen,char charMatches[N][wordLen],int charOccurrencies[N],char charExact[N]);
 
 #endif /* Dictionary_h */
