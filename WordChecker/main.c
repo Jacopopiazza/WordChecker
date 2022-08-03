@@ -22,41 +22,7 @@ void print(const char* str){
     }
 }
 
-void filterFromStringRecCall(t_node *tree,const char* toBeCheckedWord,const char* buffer,int step){
-    if(tree == NULL || !tree->matches || tree->hasChild == 0){
-        return;
-    }
-    
-    for(size_t i = 0;i<N;i++){
-        if(tree->pointers[i] != NULL && (( buffer[step] == '+' && charToIndex(toBeCheckedWord[step]) != i) || (buffer[step] == '/' && charToIndex(toBeCheckedWord[step]) == i))){
-            tree->pointers[i]->matches = 0;
-            continue;
-        }
-        else{
-            filterFromStringRecCall(tree->pointers[i], toBeCheckedWord, buffer, step+1);
-        }
-    }
-    
-}
 
-void filterFromString(t_node *tree,const char* toBeCheckedWord,const char* buffer){
-    
-    int step = 0;
-    
-    if(tree == NULL || !tree->matches || tree->hasChild == 0){
-        return;
-    }
-    
-    for(size_t i = 0;i<N;i++){
-        if(tree->pointers[i] != NULL && (( buffer[step] == '+' && charToIndex(toBeCheckedWord[step]) != i) || (buffer[step] == '/' && charToIndex(toBeCheckedWord[step]) == i))){
-            tree->pointers[i]->matches = 0;
-            continue;
-        }
-        else{
-            filterFromStringRecCall(tree->pointers[i], toBeCheckedWord, buffer, step+1);
-        }
-    }
-}
 
 void filterTreeCompletelyRecCall(t_node *tree,const char* toBeCheckedWord,const char* buffer,int wordLen,char charMatches[N][wordLen],int charOccurrencies[N],char charExact[N],int step,int currentWord[N],int *validWords){
     
@@ -67,8 +33,6 @@ void filterTreeCompletelyRecCall(t_node *tree,const char* toBeCheckedWord,const 
     if(step == wordLen && !tree->hasChild){
         
         for(size_t i=0;i<N;i++){
-            int cw = currentWord[i];
-            int co = charOccurrencies[i];
             if(currentWord[i] < charOccurrencies[i]){
                 
                 tree->matches = 0;
@@ -83,7 +47,7 @@ void filterTreeCompletelyRecCall(t_node *tree,const char* toBeCheckedWord,const 
     }
     
     for(size_t i = 0;i<N;i++){
-        if(tree->pointers[i] != NULL && (!charMatches[i][step] || (currentWord[i]+1>charOccurrencies[i] && charExact[i]) || ( buffer[step] == '+' && charToIndex(toBeCheckedWord[step]) != i) || (buffer[step] == '/' && charToIndex(toBeCheckedWord[step]) == i))){
+        if(tree->pointers[i] != NULL && (!charMatches[i][step] || (currentWord[i]+1>charOccurrencies[i] && charExact[i]) )){
             tree->pointers[i]->matches = 0;
             continue;
         }
@@ -109,7 +73,7 @@ void filterTreeCompletely(t_node *tree,const char* toBeCheckedWord,const char* b
 
     for(size_t i = 0;i<N;i++){
         int currentWord[N] = {0};
-        if(tree->pointers[i] != NULL && (!charMatches[i][step] || (currentWord[i]+1>charOccurrencies[i] && charExact[i]) || ( buffer[step] == '+' && charToIndex(toBeCheckedWord[step]) != i) || (buffer[step] == '/' && charToIndex(toBeCheckedWord[step]) == i))){
+        if(tree->pointers[i] != NULL && (!charMatches[i][step] || (currentWord[i]+1>charOccurrencies[i] && charExact[i]) )){
             tree->pointers[i]->matches = 0;
             
             continue;
@@ -124,47 +88,6 @@ void filterTreeCompletely(t_node *tree,const char* toBeCheckedWord,const char* b
     
 }
 
-void filterFromOccurrenciesRecCall(t_node* tree,int wordLen,char charMatches[N][wordLen],int charOccurrencies[N],char charExact[N],int step,int currentWord[N]){
-    
-    if(tree == NULL || !tree->matches || tree->hasChild == 0){
-        return;
-    }
-    
-    for(size_t i = 0;i<N;i++){
-        if(tree->pointers[i] != NULL && (!charMatches[i][step] || (currentWord[i]+1>charOccurrencies[i] && charExact[i]))){
-            tree->pointers[i]->matches = 0;
-            continue;
-        }
-        else{
-            currentWord[i]++;
-            filterFromOccurrenciesRecCall(tree->pointers[i], wordLen,charMatches,charOccurrencies,charExact, step+1,currentWord);
-        }
-    }
-    
-}
-
-void filterFromOccurrencies(t_node* tree,int wordLen,char charMatches[N][wordLen],int charOccurrencies[N],char charExact[N]){
-    
-    int step = 0;
-    int currentWord[N] = {0};
-    
-    if(tree == NULL || !tree->matches || tree->hasChild == 0){
-        return;
-    }
-    
-    for(size_t i = 0;i<N;i++){
-        if(tree->pointers[i] != NULL && (!charMatches[i][step] || (currentWord[i]+1>charOccurrencies[i] && charExact[i]))){
-            tree->pointers[i]->matches = 0;
-            continue;
-        }
-        else{
-            currentWord[i]++;
-            filterFromOccurrenciesRecCall(tree->pointers[i], wordLen,charMatches,charOccurrencies,charExact, step+1,currentWord);
-        }
-    }
-}
-
-
 
 int checkWord(const char* refWord,const char* toBeCheckedWord,int wordLen,char charMatches[N][wordLen],int charOccurrencies[N],char charExact[N],t_node *tree){
     
@@ -177,6 +100,7 @@ int checkWord(const char* refWord,const char* toBeCheckedWord,int wordLen,char c
     int currentOccurrencies[N] = {0};
     char currentExact[N] = {0};
     
+    char won = 1;
     
     t_node *curr = tree;
     for(size_t i = 0;i<wordLen;i++){
@@ -193,12 +117,26 @@ int checkWord(const char* refWord,const char* toBeCheckedWord,int wordLen,char c
             buffer[i] = '+';
             used[i] = 1;
             currentOccurrencies[charToIndex(toBeCheckedWord[i])]++;
+            
+            for(size_t j=0;j<N;j++){
+                charMatches[j][i] = 0;
+            }
+            charMatches[charToIndex(toBeCheckedWord[i])][i] = 1;
         }
         else{
+            won = 0;
             charMatches[charToIndex(toBeCheckedWord[i])][i] = 0;
         }
         
         curr = curr->pointers[charToIndex(toBeCheckedWord[i])];
+    }
+    
+    if(won){
+        //Ha vinto
+        free(buffer);
+        free(used);
+        printf("ok\n");
+        return 1;
     }
     
     for(size_t i=0;i<wordLen;i++){
@@ -213,27 +151,13 @@ int checkWord(const char* refWord,const char* toBeCheckedWord,int wordLen,char c
                     break;
                 }
             }
+            
             if(j == wordLen ){///Non ho *altre* occorrenze libere della lettera che sto cercando => '\'
                 currentExact[index] = 1;
             }
             
         }
     }
-    
-    char *wonString = calloc(wordLen+1, 1);
-    for(size_t i=0;i<wordLen;i++){
-        wonString[i] = '+';
-    }
-    
-    if(strcmp(buffer, wonString) == 0){
-        //Ha vinto
-        free(buffer);
-        free(wonString);
-        free(used);
-        printf("ok\n");
-        return 1;
-    }
-    free(wonString);
     
     for(size_t i=0;i<N;i++){
         if(currentExact[i]){
@@ -245,13 +169,7 @@ int checkWord(const char* refWord,const char* toBeCheckedWord,int wordLen,char c
         }
     }
     
-    /*
-    //Applico filtri del +, ovvero depth visit e se a passo X, buffer[X]='+' e lettera a passo X != toBeCheckedWord[X] matches 0, s buffer[X]='\' e lettera == toBeCheckedWord[X] matches[0]
-    filterFromString(tree,toBeCheckedWord,buffer);
     
-    //Applico filtri da occorrenze
-    filterFromOccurrencies(tree,wordLen,charMatches,charOccurrencies,charExact);
-     */
     printf("%s\n",buffer);
     
     //Filtro in un passo unico
