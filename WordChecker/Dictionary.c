@@ -8,43 +8,52 @@
 #include "Dictionary.h"
 
 char indexToChar(int i){
-    if(i >= 0 && i<= 25){
-        return 'a' + i;
-    }
     
-    if(i>=26 && i <= 51){
-        return 'A' + i - 26;
-    }
-    
-    if(i>= 52 && i<= 61){
-        return '0' + i - 52;
-    }
-    
-    if(i == 62){
+    if(i==0){
         return '-';
     }
     
-    return '_';
+    if(i >= 1 && i <= 10){
+        return '0' + i - 1;
+    }
+    
+    if(i>= 11 && i <= 36){
+        return 'A' + i - 11;
+    }
+    
+    if(i == 37){
+        return '_';
+    }
+    
+    if (i>= 38 && i <= 63){
+        return 'a'+i -38;
+    }
+    return '-';
 }
 
 int charToIndex(char c){
-    if (c >= 'a' && c <= 'z'){
-        return c-'a';
-    }
     
-    if(c >= 'A' && c <= 'Z'){
-        return 26 + c - 'A';
+    if(c == '-'){
+        return 0;
     }
     
     if(c >= '0' && c <= '9'){
-        return 52 + c - '0';
+        return c - '0' + 1;
     }
     
-    if (c == '-'){
-        return 62;
+    if(c >= 'A' && c <= 'Z'){
+        return c - 'A' + 11;
     }
     
-    return 63;
+    if(c == '_'){
+        return c - '_'+37;
+    }
+    
+    if(c >= 'a' && c <= 'z'){
+        return 38 + c - 'a';
+    }
+    
+    return 0;
 }
 
 
@@ -54,15 +63,10 @@ void printWords(t_node* tree,int wordLen){
     if(tree == NULL || tree->hasChild == 0){
         return;
     }
-    
-    /*char* buffer = malloc(sizeof(char) * wordLen);
-    for(int i=0;i<wordLen;i++){
-        buffer[i] = '\0';
-    }*/
-    
+
     char* buffer = calloc(wordLen, sizeof(char));
     
-    for(int i=0;i<N;i++){
+    for(size_t i=0;i<N;i++){
         //Rec call
         buffer[0] = indexToChar(i);
         if(tree->pointers[i] != NULL && tree->matches == 1 && tree->hasChild == 1){
@@ -80,67 +84,14 @@ void printWordsRecCall(t_node *tree,int wordLen,int step,char *buffer){
         return;
     }
     
-    for(int i=0;i<N;i++){
+    for(size_t i=0;i<N;i++){
         //Rec call
         buffer[step] = indexToChar(i);
         if(tree->pointers[i] != NULL && tree->matches == 1 && tree->hasChild == 1){
             printWordsRecCall(tree->pointers[i], wordLen, step+1, buffer);
         }
     }
-    
-    
 }
-
-int countWords(t_node* tree,int wordLen){
-    
-    if(tree == NULL || tree->hasChild == 0){
-        return 0;
-    }
-    
-    /*char* buffer = malloc(sizeof(char) * wordLen);
-    for(int i=0;i<wordLen;i++){
-        buffer[i] = '\0';
-    }*/
-    
-    char* buffer = calloc(wordLen, sizeof(char));
-    
-    int *count = malloc(sizeof(int));
-    *count = 0;
-    
-    for(int i=0;i<N;i++){
-        //Rec call
-        buffer[0] = indexToChar(i);
-        if(tree->pointers[i] != NULL && tree->matches == 1 && tree->hasChild == 1){
-            countWordsRecCall(tree->pointers[i],wordLen,1,buffer,count);
-        }
-        
-        
-    }
-    int val = *count;
-    free(count);
-    return val;
-}
-
-void countWordsRecCall(t_node *tree,int wordLen,int step,char *buffer,int *count){
-    if(step >= wordLen && tree->matches == 1){
-        (*count)++;
-        return;
-    }
-    
-    for(int i=0;i<N;i++){
-        //Rec call
-        buffer[step] = indexToChar(i);
-        if(tree->pointers[i] != NULL && tree->matches == 1 && tree->hasChild == 1){
-            countWordsRecCall(tree->pointers[i], wordLen, step+1, buffer,count);
-        }
-    }
-    
-    
-}
-
-
-
-
 
 
 int addWordToTree(t_node* tree, const char* word){
@@ -153,7 +104,7 @@ int addWordToTree(t_node* tree, const char* word){
         }
         tree->hasChild = 0;
         tree->matches = 1;
-        for(int i=0;i<N;i++){
+        for(size_t i=0;i<N;i++){
             tree->pointers[i] = NULL;
         }
     }
@@ -176,7 +127,7 @@ int addWordToTree(t_node* tree, const char* word){
             }
             curr->pointers[index]->hasChild = 0;
             curr->pointers[index]->matches = 1;
-            for(int i=0;i<N;i++){
+            for(size_t i=0;i<N;i++){
                 curr->pointers[index]->pointers[i] = NULL;
             }
         }
