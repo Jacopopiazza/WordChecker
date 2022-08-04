@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		321C824B2873988200809C2A /* Dictionary.c in Sources */ = {isa = PBXBuildFile; fileRef = 321C824A2873988200809C2A /* Dictionary.c */; };
 		32F5854A28441F6E00B43B7A /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 32F5854928441F6E00B43B7A /* main.c */; };
 /* End PBXBuildFile section */
 
@@ -24,8 +23,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		321C82492873988200809C2A /* Dictionary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Dictionary.h; sourceTree = "<group>"; };
-		321C824A2873988200809C2A /* Dictionary.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = Dictionary.c; sourceTree = "<group>"; };
 		32F5854628441F6E00B43B7A /* WordChecker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = WordChecker; sourceTree = BUILT_PRODUCTS_DIR; };
 		32F5854928441F6E00B43B7A /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		32F58550284422B600B43B7A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -63,8 +60,6 @@
 			isa = PBXGroup;
 			children = (
 				32F5854928441F6E00B43B7A /* main.c */,
-				321C82492873988200809C2A /* Dictionary.h */,
-				321C824A2873988200809C2A /* Dictionary.c */,
 			);
 			path = WordChecker;
 			sourceTree = "<group>";
@@ -127,7 +122,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				32F5854A28441F6E00B43B7A /* main.c in Sources */,
-				321C824B2873988200809C2A /* Dictionary.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
