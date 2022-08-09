@@ -3,4 +3,31 @@
    uuid = "B6E120D3-2BD5-4DF4-A142-4CA49ABB1A25"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "EEB77750-83DE-414B-AF91-EE4680960C55"
+            shouldBeEnabled = "Yes"
+            condition = "strcmp(buffer, &quot;-D7w&quot;) == 0"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "WordChecker/main.c"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "945"
+            endingLineNumber = "945"
+            landmarkName = "main(argc, argv)"
+            landmarkType = "9">
+            <Actions>
+               <BreakpointActionProxy
+                  ActionExtensionID = "Xcode.BreakpointAction.Sound">
+                  <ActionContent
+                     soundName = "Ping">
+                  </ActionContent>
+               </BreakpointActionProxy>
+            </Actions>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>
