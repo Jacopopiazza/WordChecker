@@ -193,11 +193,12 @@ void printWords(t_node* tree, int wordLen){
         
         curr = curr->brother;
     }
-
+    
+    free(buffer);
 }
 
 
-void iterativeInsertWordFiltered(t_node *tree,const char *word,int wordLen,u_short charOccurrencies[N],char charExact[N],char charMatches[N][wordLen]){
+void iterativeInsertWordFiltered(t_node *tree,const char *word,int wordLen,int charOccurrencies[N],char charExact[N],char charMatches[N][wordLen]){
 
     t_node *new;
     t_node *last=NULL;
@@ -309,12 +310,12 @@ void iterativeInsertWordFiltered(t_node *tree,const char *word,int wordLen,u_sho
                 
                 if(chkPrefix > 0){
                     if(toChange->son != NULL){
-                        new1->son = toChange->son;
+                        new2->son = toChange->son;
                     }
                 }
                 else{
                     if(toChange->son != NULL){
-                        new2->son = toChange->son;
+                        new1->son = toChange->son;
                     }
                 }
 
@@ -459,12 +460,12 @@ void iterativeInsertWordFiltered(t_node *tree,const char *word,int wordLen,u_sho
                 
                 if(chkPrefix > 0){
                     if(toChange->son != NULL){
-                        new1->son = toChange->son;
+                        new2->son = toChange->son;
                     }
                 }
                 else{
                     if(toChange->son != NULL){
-                        new2->son = toChange->son;
+                        new1->son = toChange->son;
                     }
                 }
                 
@@ -486,7 +487,7 @@ void iterativeInsertWordFiltered(t_node *tree,const char *word,int wordLen,u_sho
         free(buffer);
     }
     
-    u_short currentWord[N] = {0};
+    int currentWord[N] = {0};
     for(size_t i=0;i<wordLen;i++){
         currentWord[charToIndex(word[i])]++;
     }
@@ -714,7 +715,7 @@ void iterativeInsertWord(t_node *tree, const char *word){
 
 
 
-void filterTreeRecCall(t_node *tree,int wordLen,u_short charOccurrencies[N],char charExact[N],char charMatches[N][wordLen],int step,u_short currentWord[N],int *validWords){
+void filterTreeRecCall(t_node *tree,int wordLen,int charOccurrencies[N],char charExact[N],char charMatches[N][wordLen],int step,int currentWord[N],int *validWords){
 
 
     if(tree == NULL || !tree->matches){
@@ -743,10 +744,13 @@ void filterTreeRecCall(t_node *tree,int wordLen,u_short charOccurrencies[N],char
     while(curr != NULL){
         
         filter = 1;
-        u_short currentWord[N] = {0};
         
+        char charInPrefix[strlen(curr->prefix)];
+        int reached = 0;
+       
         for(size_t i=0;i<strlen(curr->prefix);i++){
             int index = charToIndex(curr->prefix[i]);
+            
             if(!charMatches[index][step+i] || (currentWord[index]+1 > charOccurrencies[index] && charExact[index]) ){
                 curr->matches = 0;
                 filter = 0;
@@ -754,18 +758,28 @@ void filterTreeRecCall(t_node *tree,int wordLen,u_short charOccurrencies[N],char
             }
             else{
                 currentWord[index]++;
+                charInPrefix[i] = indexToChar(index);
+                reached++;
             }
         }
         if(filter){
             filterTreeRecCall(curr, wordLen, charOccurrencies, charExact, charMatches, step+strlen(curr->prefix), currentWord,validWords);
+            
+            
         }
+        for(size_t i=0;i<reached;i++){
+            currentWord[charToIndex(charInPrefix[i])]--;
+        }
+        
+        
+        
 
         curr = curr->brother;
     }
     
 }
 
-void filterTree(t_node *tree,int wordLen,u_short charOccurrencies[N],char charExact[N],char charMatches[N][wordLen]){
+void filterTree(t_node *tree,int wordLen,int charOccurrencies[N],char charExact[N],char charMatches[N][wordLen]){
     if(tree == NULL || tree->son == NULL){
         return;
     }
@@ -779,11 +793,14 @@ void filterTree(t_node *tree,int wordLen,u_short charOccurrencies[N],char charEx
     
     while(curr != NULL){
         filter = 1;
-        u_short currentWord[N] = {0};
+        int currentWord[N] = {0};
         
         for(size_t i=0;i<strlen(curr->prefix);i++){
             int index = charToIndex(curr->prefix[i]);
             if(!charMatches[index][step+i] || (currentWord[index]+1 > charOccurrencies[index] && charExact[index]) ){
+                
+
+                
                 curr->matches = 0;
                 filter = 0;
                 break;
@@ -799,13 +816,12 @@ void filterTree(t_node *tree,int wordLen,u_short charOccurrencies[N],char charEx
         curr = curr->brother;
     }
     
-    
     printf("%d\n",*validWords);
     free(validWords);
     
 }
 
-int checkWord(const char *refWord,const char* toBeCheckedWord,int wordLen,t_node* tree, u_short charOccurrencies[N], char charExact[N], char charMatches[N][wordLen]){
+int checkWord(const char *refWord,const char* toBeCheckedWord,int wordLen,t_node* tree, int charOccurrencies[N], char charExact[N], char charMatches[N][wordLen]){
     
     
     if(!isWordInTree(tree, toBeCheckedWord)){
@@ -816,9 +832,9 @@ int checkWord(const char *refWord,const char* toBeCheckedWord,int wordLen,t_node
     char *buffer = calloc(wordLen+1, 1);
     char won = 1;
     
-    u_short freeOccurrencies[N] = {0};
-    u_short currentWord[N] = {0};
-    t_node *curr = tree;
+    int freeOccurrencies[N] = {0};
+    int currentWord[N] = {0};
+    //t_node *curr = tree;
     
     
     for(size_t i = 0;i<wordLen;i++){
@@ -850,27 +866,41 @@ int checkWord(const char *refWord,const char* toBeCheckedWord,int wordLen,t_node
                     charMatches[j][i] = 0;
                 }
                 charMatches[charToIndex(toBeCheckedWord[i])][i]=1;
+                
                 break;
             default:
                 charMatches[charToIndex(toBeCheckedWord[i])][i]=0;
+                
                 if(freeOccurrencies[charToIndex(toBeCheckedWord[i])] > 0){
                     buffer[i] = '|';
+                    currentWord[charToIndex(toBeCheckedWord[i])]++;
+                    if(currentWord[charToIndex(toBeCheckedWord[i])] > charOccurrencies[charToIndex(toBeCheckedWord[i])]){
+                        charOccurrencies[charToIndex(toBeCheckedWord[i])]=currentWord[charToIndex(toBeCheckedWord[i])];
+                    }
                     freeOccurrencies[charToIndex(toBeCheckedWord[i])]--;
-                    charOccurrencies[charToIndex(toBeCheckedWord[i])]++;
+                    
+                    /*freeOccurrencies[charToIndex(toBeCheckedWord[i])]--;
+                    charOccurrencies[charToIndex(toBeCheckedWord[i])]++;*/
                 }
                 else{
                     charExact[charToIndex(toBeCheckedWord[i])] = 1;
+                    charOccurrencies[charToIndex(toBeCheckedWord[i])]=currentWord[charToIndex(toBeCheckedWord[i])];
                 }
                 break;
         }
     }
     
+    
+    
     printf("%s\n",buffer);
     //FILTER
+    
+    //printWords(tree, wordLen);
+    
     filterTree(tree, wordLen, charOccurrencies, charExact, charMatches);
     
     free(buffer);
-    
+        
     return 0;
 }
 
@@ -890,7 +920,7 @@ void cleanTreeMatches(t_node *tree, int wordLen,int step){
     
 }
 
-void newGame(t_node *tree, int wordLen,char charMatches[N][wordLen],u_short charOccurrencies[N],char charExact[N]){
+void newGame(t_node *tree, int wordLen,char charMatches[N][wordLen],int charOccurrencies[N],char charExact[N]){
     for(size_t i=0;i<N;i++){
         charOccurrencies[i] = 0;
         charExact[i] = 0;
@@ -902,6 +932,24 @@ void newGame(t_node *tree, int wordLen,char charMatches[N][wordLen],u_short char
     cleanTreeMatches(tree,wordLen,0);
 }
 
+void freeTree(t_node *tree){
+    
+    if(tree==NULL){
+        return;
+    }
+    
+    if(tree->son){
+        freeTree(tree->son);
+    }
+    if(tree->brother){
+        freeTree(tree->brother);
+    }
+    if(tree->prefix){
+        free(tree->prefix);
+    }
+    free(tree);
+}
+
 int main(int argc, const char * argv[]) {
     // insert code here...
     
@@ -911,7 +959,7 @@ int main(int argc, const char * argv[]) {
     
     //Creo e inizializzo strutture di controllo
     char charMatches[N][wordLen];
-    u_short charOccurrencies[N] = {0};
+    int charOccurrencies[N] = {0};
     char charExact[N] = {0};
     
     for(size_t i=0;i<N;i++){
@@ -946,6 +994,20 @@ int main(int argc, const char * argv[]) {
         //addWordToTree(tree, buffer);
     }
     
+    /*FILE *file = fopen("/Users/japo/Downloads/open_testcases(1)/test3_words.txt", "r");
+    char * line = NULL;
+    size_t len = 0;
+    ssize_t read;
+    
+    while ((read = getline(&line, &len, file)) != -1) {
+        if( line[5] == '\r' ) {
+                line[5] = '\0';
+            }
+        iterativeInsertWord(tree, line);
+    }
+    
+    fclose(file);*/
+     
    
     
     char new_game = 1;
@@ -1029,5 +1091,10 @@ int main(int argc, const char * argv[]) {
         nullScanfValue=0;
     }
     
+    freeTree(tree);
+
+    
+    
     return 0;
 }
+
