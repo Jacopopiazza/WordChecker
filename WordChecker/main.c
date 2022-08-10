@@ -715,7 +715,7 @@ void iterativeInsertWord(t_node *tree, const char *word){
 
 
 
-void filterTreeRecCall(t_node *tree,int wordLen,int charOccurrencies[N],char charExact[N],char charMatches[N][wordLen],int step,int currentWord[N],int *validWords){
+void filterTreeRecCall(t_node *tree,int wordLen,int charOccurrencies[N],char charExact[N],char charMatches[N][wordLen], char print, int step,int currentWord[N],int *validWords){
 
 
     if(tree == NULL || !tree->matches){
@@ -763,7 +763,7 @@ void filterTreeRecCall(t_node *tree,int wordLen,int charOccurrencies[N],char cha
             }
         }
         if(filter){
-            filterTreeRecCall(curr, wordLen, charOccurrencies, charExact, charMatches, step+strlen(curr->prefix), currentWord,validWords);
+            filterTreeRecCall(curr, wordLen, charOccurrencies, charExact, charMatches, print,step+strlen(curr->prefix), currentWord,validWords);
             
             
         }
@@ -779,7 +779,7 @@ void filterTreeRecCall(t_node *tree,int wordLen,int charOccurrencies[N],char cha
     
 }
 
-void filterTree(t_node *tree,int wordLen,int charOccurrencies[N],char charExact[N],char charMatches[N][wordLen]){
+void filterTree(t_node *tree,int wordLen,int charOccurrencies[N],char charExact[N],char charMatches[N][wordLen],char print){
     if(tree == NULL || tree->son == NULL){
         return;
     }
@@ -810,13 +810,14 @@ void filterTree(t_node *tree,int wordLen,int charOccurrencies[N],char charExact[
             }
         }
         if(filter){
-            filterTreeRecCall(curr, wordLen, charOccurrencies, charExact, charMatches, step+strlen(curr->prefix), currentWord,validWords);
+            filterTreeRecCall(curr, wordLen, charOccurrencies, charExact, charMatches, print, step+strlen(curr->prefix), currentWord,validWords);
         }
 
         curr = curr->brother;
     }
-    
-    printf("%d\n",*validWords);
+    if(print){
+        printf("%d\n",*validWords);
+    }
     free(validWords);
     
 }
@@ -897,7 +898,7 @@ int checkWord(const char *refWord,const char* toBeCheckedWord,int wordLen,t_node
     
     //printWords(tree, wordLen);
     
-    filterTree(tree, wordLen, charOccurrencies, charExact, charMatches);
+    filterTree(tree, wordLen, charOccurrencies, charExact, charMatches, 1);
     
     free(buffer);
         
@@ -950,12 +951,161 @@ void freeTree(t_node *tree){
     free(tree);
 }
 
+void addWordToTree(t_node *tree, const char* word){
+    
+    size_t wordLen = strlen(word);
+    
+    if(tree->son == NULL){
+        
+        tree->son = malloc(sizeof(t_node));
+        tree->son->son = NULL;
+        tree->son->brother = NULL;
+        tree->son->matches = 1;
+        tree->son->prefix = calloc(wordLen+1, 1);
+        strcpy(tree->son->prefix, word);
+        
+    }
+    else{
+        
+        t_node *curr = tree->son;
+        t_node *parent = tree;
+        
+        char *buffer = calloc(wordLen+1, 1);
+        strcpy(buffer, word);
+        size_t step = 0;
+        
+        while (step < wordLen) {
+            int chkCmp = strcmp(curr->prefix, buffer);
+            int chkPrefix = checkPrefixes(curr->prefix, buffer);
+            
+            //1: condividono tutto il prefisso->vado avanti con il figlio
+            //2: condividono solo una parte di prefisso, -> splitto e creo nuovo figlio
+            //3: non condividono nulla -> dipende da ordine
+            
+            if(abs(chkPrefix) == strlen(curr->prefix)){
+                buffer[0] = '\0';
+                step += abs(chkPrefix);
+                strcpy(buffer, word+step);
+                parent = curr;
+                curr = curr->son;
+
+                continue;
+            }
+            else if(chkPrefix != 0){
+                
+                char *newPrefix = calloc(abs(chkPrefix)+1, 1);
+                snprintf(newPrefix, abs(chkPrefix)+1, "%s",buffer);
+                
+                t_node *new1 = malloc(sizeof(t_node));
+                t_node *new2 = malloc(sizeof(t_node));
+                
+                new1->brother = new2;
+                new2->brother = NULL;
+                
+                if(chkPrefix < 0){
+                    new1->prefix = calloc(strlen(curr->prefix)-abs(chkPrefix)+1, 1);
+                    new2->prefix = calloc(wordLen-step-abs(chkPrefix)+1, 1);
+                    snprintf(new1->prefix, strlen(curr->prefix)-abs(chkPrefix)+1, "%s", curr->prefix+abs(chkPrefix));
+                    snprintf(new2->prefix, wordLen-step-abs(chkPrefix)+1, "%s", buffer+abs(chkPrefix));
+                    
+                    new1->son = curr->son;
+                    new2->son = NULL;
+                }
+                else{
+                    new1->prefix = calloc(wordLen-step-abs(chkPrefix)+1, 1);
+                    new2->prefix = calloc(strlen(curr->prefix)-abs(chkPrefix)+1, 1);
+                    snprintf(new1->prefix, wordLen-step-abs(chkPrefix)+1, "%s", buffer+abs(chkPrefix));
+                    snprintf(new2->prefix, strlen(curr->prefix)-abs(chkPrefix)+1, "%s", curr->prefix+abs(chkPrefix));
+                    
+                    
+                    new2->son = curr->son;
+                    new1->son = NULL;
+                }
+                
+                curr->son = new1;
+                free(curr->prefix);
+                curr->prefix = newPrefix;
+                curr->matches=1;
+                new1->matches = 1;
+                new2->matches = 1;
+                
+                step += strlen(buffer);
+                buffer[0] = '\0';
+                continue;
+                
+            }
+            else if(chkCmp > 0 && chkPrefix == 0){
+                t_node *new = malloc(sizeof(t_node));
+                new->brother = curr;
+                new->matches = 1;
+                new->son = NULL;
+                new->prefix = calloc(strlen(buffer)+1, 1);
+                snprintf(new->prefix, strlen(buffer)+1, "%s",buffer);
+                
+                parent->son = new;
+                step += strlen(buffer);
+                buffer[0] = '\0';
+                
+                continue;
+            }
+            
+            //Se sei arrivato qui dopo il primo inizio allora non ha nulla a che fare con il primo figlio, bisogna cercare tra i fratelli
+            
+            if(curr->brother){
+                chkCmp = strcmp(curr->brother->prefix, buffer);
+                chkPrefix = checkPrefixes(curr->brother->prefix, buffer);
+                
+                if(chkCmp > 0 && chkPrefix == 0){
+                    t_node *new = malloc(sizeof(t_node));
+                    new->brother = curr->brother;
+                    new->matches = 1;
+                    new->son = NULL;
+                    new->prefix = calloc(strlen(buffer)+1, 1);
+                    snprintf(new->prefix, strlen(buffer)+1, "%s",buffer);
+                    
+                    curr->brother = new;
+                    step += strlen(buffer);
+                    buffer[0] = '\0';
+                    
+                    continue;
+                }
+                else{
+                    curr = curr->brother;
+                    continue;
+                }
+                
+            }
+            else{
+                curr->brother = malloc(sizeof(t_node));
+                curr->brother->brother = NULL;
+                curr->brother->son = NULL;
+                curr->brother->matches = 1;
+                curr->brother->prefix = calloc(strlen(buffer)+1, 1);
+                strcpy(curr->brother->prefix, buffer);
+                
+                step += strlen(buffer);
+                buffer[0] = '\0';
+                continue;
+            }
+            
+        }
+        
+        free(buffer);
+        
+    }
+    
+    
+}
+
+
+
 int main(int argc, const char * argv[]) {
     // insert code here...
     
     char nullScanfValue;
     int wordLen = -1;
     nullScanfValue=scanf("%d", &wordLen);
+
     
     //Creo e inizializzo strutture di controllo
     char charMatches[N][wordLen];
@@ -975,6 +1125,8 @@ int main(int argc, const char * argv[]) {
     tree->son = NULL;
     tree->brother = NULL;
     
+
+    
     char *buffer;
     if(wordLen > COMMAND_LEN){
         buffer = calloc(wordLen+1, 1);
@@ -990,7 +1142,8 @@ int main(int argc, const char * argv[]) {
         }
         
         //insertWord(tree, buffer);
-        iterativeInsertWord(tree, buffer);
+        //iterativeInsertWord(tree, buffer);
+        addWordToTree(tree, buffer);
         //addWordToTree(tree, buffer);
     }
     
@@ -1029,11 +1182,13 @@ int main(int argc, const char * argv[]) {
                 while(1){
                     nullScanfValue=scanf("%s",buffer);
                     if(strcmp(buffer, COMMAND_IE) == 0){
+                        filterTree(tree, wordLen, charOccurrencies, charExact, charMatches, 0);
                         break;
                     }
                     //addWordToTreeFiltered(tree, buffer, wordLen, charMatches, charOccurrencies, charExact);
                     //insertWordFiltered(tree, buffer, wordLen, charOccurrencies, charExact, charMatches);
-                    iterativeInsertWordFiltered(tree, buffer, wordLen, charOccurrencies, charExact, charMatches);
+                    //iterativeInsertWordFiltered(tree, buffer, wordLen, charOccurrencies, charExact, charMatches);
+                    addWordToTree(tree, buffer);
                 }
             }
             else if(strcmp(buffer, COMMAND_FP) == 0){
@@ -1073,7 +1228,8 @@ int main(int argc, const char * argv[]) {
                     }
                     //addWordToTree(tree, buffer);
                     //insertWord(tree, buffer);
-                    iterativeInsertWord(tree, buffer);
+                    addWordToTree(tree, buffer);
+                    //iterativeInsertWord(tree, buffer);
                 }
             }
             else{
