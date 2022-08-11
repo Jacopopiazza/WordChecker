@@ -8,14 +8,14 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "1B2410F8-EC2D-4896-BB09-E9773EC8FCF4"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WordChecker/main.c"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1166"
-            endingLineNumber = "1166"
+            startingLineNumber = "852"
+            endingLineNumber = "852"
             landmarkName = "main(argc, argv)"
             landmarkType = "9">
          </BreakpointContent>
@@ -30,8 +30,8 @@
             filePath = "WordChecker/main.c"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "727"
-            endingLineNumber = "727"
+            startingLineNumber = "192"
+            endingLineNumber = "192"
             landmarkName = "filterTreeRecCall(tree, wordLen, charOccurrencies, charExact, print, step, currentWord, validWords)"
             landmarkType = "9">
          </BreakpointContent>
@@ -46,8 +46,8 @@
             filePath = "WordChecker/main.c"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "735"
-            endingLineNumber = "735"
+            startingLineNumber = "200"
+            endingLineNumber = "200"
             landmarkName = "filterTreeRecCall(tree, wordLen, charOccurrencies, charExact, print, step, currentWord, validWords)"
             landmarkType = "9">
          </BreakpointContent>
@@ -62,8 +62,8 @@
             filePath = "WordChecker/main.c"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "731"
-            endingLineNumber = "731"
+            startingLineNumber = "196"
+            endingLineNumber = "196"
             landmarkName = "filterTreeRecCall(tree, wordLen, charOccurrencies, charExact, print, step, currentWord, validWords)"
             landmarkType = "9">
          </BreakpointContent>
@@ -78,8 +78,8 @@
             filePath = "WordChecker/main.c"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "901"
-            endingLineNumber = "901"
+            startingLineNumber = "374"
+            endingLineNumber = "374"
             landmarkName = "checkWord(refWord, toBeCheckedWord, wordLen, tree, charOccurrencies, charExact)"
             landmarkType = "9">
          </BreakpointContent>
@@ -95,8 +95,8 @@
             filePath = "WordChecker/main.c"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "725"
-            endingLineNumber = "725"
+            startingLineNumber = "190"
+            endingLineNumber = "190"
             landmarkName = "filterTreeRecCall(tree, wordLen, charOccurrencies, charExact, print, step, currentWord, validWords)"
             landmarkType = "9">
          </BreakpointContent>
@@ -111,8 +111,8 @@
             filePath = "WordChecker/main.c"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1254"
-            endingLineNumber = "1254"
+            startingLineNumber = "941"
+            endingLineNumber = "941"
             landmarkName = "main(argc, argv)"
             landmarkType = "9">
          </BreakpointContent>
@@ -127,8 +127,8 @@
             filePath = "WordChecker/main.c"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1250"
-            endingLineNumber = "1250"
+            startingLineNumber = "937"
+            endingLineNumber = "937"
             landmarkName = "main(argc, argv)"
             landmarkType = "9">
          </BreakpointContent>
@@ -137,14 +137,14 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "36B809D7-4FD1-49EF-B841-1AE13B10BD90"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WordChecker/main.c"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1146"
-            endingLineNumber = "1146"
+            startingLineNumber = "832"
+            endingLineNumber = "832"
             landmarkName = "main(argc, argv)"
             landmarkType = "9">
          </BreakpointContent>
