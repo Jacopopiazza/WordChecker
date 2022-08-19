@@ -1,13 +1,13 @@
 //
 //  main.c
-//  WordChecker
+//  PREFIX TRIE
 //
-//  Created by Japo on 03/08/22.
+//  Created by Japo on 04/08/22.
 //
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define N 64
 #define COMMAND_FP "+stampa_filtrate"
@@ -17,150 +17,11 @@
 #define COMMAND_LEN 17
 
 typedef struct nodo{
-    int matches;
-    int hasChild;
-    int hasBrother;
-    char letter;
+    char *prefix;
     struct nodo* son;
     struct nodo* brother;
     
 }t_node;
-
-t_node* lookForSuccessorInTree(t_node* node,char letter){
-    if(!node->hasChild){
-        return NULL;
-    }
-    
-    if(node->son == NULL){
-        return NULL;
-    }
-    
-    t_node *son = node->son;
-    
-    while(son != NULL){
-        if(son->letter == letter){
-            return son;
-        }
-        
-        son = son->brother;
-    }
-    return NULL;
-    
-}
-
-
-
-void insertWord(t_node* tree, const char* word){
-    if(tree == NULL){
-        return;
-    }
-    
-    t_node *curr = tree;
-    
-    size_t wordLen = strlen(word);
-    for(size_t i=0;i<wordLen;i++){
-        t_node *new = (t_node *)malloc(sizeof(t_node));
-        new->hasChild=0;
-        new->hasBrother = 0;
-        new->matches = 1;
-        new->son = NULL;
-        new->brother = NULL;
-        new->letter = word[i];
-        
-        
-        //Il nodo non ha ancora figli
-        if(curr->son == NULL){
-            curr->hasChild = 1;
-            curr->son = new;
-            curr = new;
-            continue;
-        }
-        
-        //Il nodo ha figli,controllo se la nuova lettera è precedente al primo figlio
-        if(word[i] < curr->son->letter){
-            new->hasBrother = 1;
-            new->brother = curr->son;
-            curr->son = new;
-            curr = new;
-
-        }
-        else if(word[i] == curr->son->letter){ //la nuova lettera è già presente ed è la prima
-            free(new);
-            curr = curr->son;
-            continue;
-        }
-        else{ //La nuova lettera va accodata perchè non è la prima in ordine alfabetico
-            t_node *appoggio = curr->son;
-            
-            //Mi fermo quando sono arrivato all'ultimo figlio o il successivo è dopo in ordine alfabetico
-            while(appoggio->hasBrother && appoggio->brother->letter < word[i]){
-                appoggio = appoggio->brother;
-            }
-            
-            if(appoggio->hasBrother){ //Il successivo è >= in ordine alfabetico alla nuova lettera
-                
-                if(appoggio->brother->letter == word[i]){ //La nuova lettera c'è già ed è il successivo
-                    free(new);
-                    curr = appoggio->brother;
-                    continue;
-                }
-                
-                //Il nodo successivo segue il carattere da aggiungere
-                new->hasBrother = 1;
-                new->brother = appoggio->brother;
-                
-            }
-            else{
-                //Il nodo successivo segue il carattere da aggiungere
-                appoggio->hasBrother = 1;
-            }
-            appoggio->brother = new;
-            curr=new;
-            
-        }
-    }
-}
-
-void printWordsRecCall(t_node *tree, int wordLen, int step, char *buffer){
-    
-    if(tree == NULL && step == wordLen){
-        
-        printf("%s\n",buffer);
-        return;
-    }
-    
-    t_node *curr = tree;
-    
-    while(curr != NULL){
-        buffer[step] = curr->letter;
-        if(curr->matches){
-            printWordsRecCall(curr->son,wordLen,step+1,buffer);
-        }
-        
-        curr = curr->brother;
-    }
-    
-}
-
-void printWords(t_node* tree, int wordLen){
-    
-    if(tree == NULL || tree->hasChild == 0){
-        return;
-    }
-    
-    char *buffer = calloc(wordLen+1, 1);
-    t_node *curr = tree->son;
-    
-    while(curr != NULL){
-        buffer[0] = curr->letter;
-        if(curr->matches ){
-            printWordsRecCall(curr->son,wordLen,1,buffer);
-        }
-        
-        curr = curr->brother;
-    }
-
-}
 
 char indexToChar(int i){
     
@@ -188,278 +49,736 @@ char indexToChar(int i){
 
 int charToIndex(char c){
     
-    if(c == '-'){
-        return 0;
-    }
-    
-    if(c >= '0' && c <= '9'){
-        return c - '0' + 1;
-    }
     
     if(c >= 'A' && c <= 'Z'){
         return c - 'A' + 11;
     }
-    
+    else if(c >= 'a' && c <= 'z'){
+        return 38 + c - 'a';
+    }
+    else if(c >= '0' && c <= '9'){
+        return c - '0' + 1;
+    }
+    if(c == '-'){
+        return 0;
+    }
     if(c == '_'){
         return c - '_'+37;
     }
     
-    if(c >= 'a' && c <= 'z'){
-        return 38 + c - 'a';
-    }
+    
     
     return 0;
 }
 
-void filterTreeRecCall(t_node *tree,int wordLen,u_short charOccurrencies[N],char charExact[N],char charMatches[N][wordLen],int step,u_short currentWord[N],int *validWords){
 
+int getMatchedNode(t_node *tree, const char* word, t_node **whereToInsert){
+    if(!tree || !tree->son){
+        return 0;
+        //return 0 -> tree is empty
+    }
+    
+    if(tree->son->prefix[0] == word[0]){
+        *whereToInsert = tree->son;
+        return 1;
+        //return 1 -> first children is the node we are looking for
+        
+    }
+    if(tree->son->prefix[0] > word[0]){
+        *whereToInsert = tree;
+        return 2;
+        //return 2 -> first children is successor of what we are looking for
+    }
+    
+    tree = tree->son;
+    while(tree->brother && tree->brother->prefix[0] < word[0]){
+        tree = tree->brother;
+    }
+    
+    if(!tree->brother){
+        *whereToInsert = tree;
+        return 3;
+        //return 3: what we are looking for will be the last
+    }
+    
+    if(tree->brother->prefix[0] == word[0]){
+        *whereToInsert = tree->brother;
+        return 4;
+        //return 4: node we are looking for is in variable
+    }
+    
+    if(tree->brother->prefix[0] > word[0]){
+        
+        *whereToInsert = tree;
+        return 5;
+        //return 5: new node will be in the middle of the node in whereToInsert and his current brother
+    }
+    
+    return -1;
+    
+}
 
-    if(tree == NULL || !tree->matches){
+int matchingCharacters(const char* word1, const char *word2){
+    int matches = 0;
+    int len = 0;
+    
+    if(strlen(word1) <= strlen(word2)){
+        len = strlen(word1);
+    }
+    else{
+        len = strlen(word2);
+    }
+    
+    for(int i = 0;i<len;i++){
+        if(word1[i] != word2[i]){
+            return matches;
+        }
+        matches++;
+    }
+    
+    return matches;
+}
+
+void insertWordIterative(t_node *tree, const char* word){
+    t_node *toInsert = NULL;
+    t_node *curr = tree;
+    char done=0;
+    
+    while(!done){
+        int resGetMatched = getMatchedNode(curr, word, &toInsert);
+        
+        switch (resGetMatched){
+            case 0:
+            {
+                curr->son = malloc(sizeof(t_node));
+                curr->son->brother = NULL;
+                curr->son->son = NULL;
+                curr->son->prefix = calloc(strlen(word)+2, 1);
+                strcpy(curr->son->prefix, word);
+                curr->son->prefix[strlen(word)] = 0;
+                curr->son->prefix[strlen(word)+1] = 1;
+                
+                done=1;
+                break;
+            }
+            
+            case 1:
+            case 4:
+            {
+                int matching = matchingCharacters(word, toInsert->prefix);
+                
+                if(matching == strlen(word)){
+                    return;
+                }
+                
+                if(matching == strlen(toInsert->prefix)){
+                    curr = toInsert;
+                    word = word+strlen(toInsert->prefix);
+                    continue;
+                }
+                
+                char *commonRadix = calloc(matching+2, 1);
+                strncpy(commonRadix, word, matching);
+                commonRadix[matching] = 0;
+                commonRadix[matching+1] = 1;
+                
+                char *newPartOldNode = calloc(strlen(toInsert->prefix)-matching+2, 1);
+                strncpy(newPartOldNode, toInsert->prefix+matching, strlen(toInsert->prefix)-matching);
+                newPartOldNode[strlen(toInsert->prefix)-matching] = 0;
+                newPartOldNode[strlen(toInsert->prefix)-matching+1] = 1;
+                
+                char *newPartNewWord = calloc(strlen(word)-matching+2, 1);
+                strncpy(newPartNewWord, word+matching, strlen(word)-matching);
+                newPartNewWord[strlen(word)-matching] = 0;
+                newPartNewWord[strlen(word)-matching+1] = 1;
+                
+                free(toInsert->prefix);
+                toInsert->prefix = commonRadix;
+                
+                t_node *newPartNewWordNode = malloc(sizeof(t_node));
+                newPartNewWordNode->prefix = newPartNewWord;
+                newPartNewWordNode->son = NULL;
+                newPartNewWordNode->brother = NULL;
+                
+                t_node *newPartOldNodeNode = malloc(sizeof(t_node));
+                newPartOldNodeNode->prefix = newPartOldNode;
+                newPartOldNodeNode->son = toInsert->son;
+                newPartOldNodeNode->brother = NULL;
+                
+                
+                if(newPartNewWord[0] < newPartOldNode[0]){
+                    toInsert->son = newPartNewWordNode;
+                    newPartNewWordNode->brother = newPartOldNodeNode;
+                }
+                else{
+                    toInsert->son = newPartOldNodeNode;
+                    newPartOldNodeNode->brother = newPartNewWordNode;
+                }
+                
+                done=1;
+                break;
+            }
+                
+            case 2:
+            {
+                t_node *new = malloc(sizeof(t_node));
+                new->son = NULL;
+                new->prefix = calloc(strlen(word)+2, 1);
+                strcpy(new->prefix, word);
+                new->prefix[strlen(word)] = 0;
+                new->prefix[strlen(word)+1] = 1;
+                new->brother = toInsert->son;
+                toInsert->son = new;
+                
+                done=1;
+                break;
+            }
+                
+            case 3:
+            case 5:
+            {
+                t_node *new = malloc(sizeof(t_node));
+                new->son = NULL;
+                new->brother = NULL;
+                new->prefix = calloc(strlen(word)+2, 1);
+                strcpy(new->prefix, word);
+                new->prefix[strlen(word)] = 0;
+                new->prefix[strlen(word)+1] = 1;
+                
+                if(resGetMatched == 5){
+                    new->brother = toInsert->brother;
+                }
+                
+                toInsert->brother = new;
+                
+                done=1;
+                break;
+            }
+                
+        }
+    }
+}
+
+char strCmpPersonal(const char* word1, const char* word2){
+    
+    if(strlen(word1) != strlen(word2)){
+        return 1;
+    }
+    
+    return memcmp(word1, word2, strlen(word1));
+}
+
+void insertWordFilteredIterative(t_node *tree, const char* word,int wordLen,int charOccurrencies[N],char charExact[N], char charMatches[N][wordLen]){
+    t_node *toInsert = NULL;
+    t_node *curr = tree;
+    int step = 0;
+    char done=0;
+    int currentWord[N] = { 0 };
+    
+    while(!done){
+        int resGetMatched = getMatchedNode(curr, word, &toInsert);
+        
+        switch (resGetMatched){
+            case 0:
+            {
+                curr->son = malloc(sizeof(t_node));
+                curr->son->brother = NULL;
+                curr->son->son = NULL;
+                curr->son->prefix = calloc(strlen(word)+2, 1);
+                curr->son->prefix[strlen(word)+1] = 1;
+                
+                for(int i = 0;i<strlen(word);i++){
+                    curr->son->prefix[i] = word[i];
+                    currentWord[charToIndex(word[i])]++;
+                    
+                    if(!charMatches[charToIndex(word[i])][i+step] || ( charExact[charToIndex(word[i])] && currentWord[charToIndex(word[i])] > charOccurrencies[charToIndex(word[i])] )){
+                        curr->son->prefix[strlen(word)+1]=0;
+                    }
+                }
+                
+                curr->son->prefix[strlen(word)] = 0;
+                step += strlen(word);
+                
+                if(curr->son->prefix[strlen(word)+1]){
+                    for(int i=0; i<N; i++){
+                        if(currentWord[i] < charOccurrencies[i]){
+                            curr->son->prefix[strlen(word)+1]=0;
+                            break;
+                        }
+                    }
+                }
+               
+                
+                done=1;
+                break;
+            }
+            
+            case 1:
+            case 4:
+            {
+                int matching = matchingCharacters(word, toInsert->prefix);
+                
+                if(matching == strlen(word)){
+                    return;
+                }
+                
+                if(matching == strlen(toInsert->prefix)){
+                    curr = toInsert;
+                    word = word+strlen(toInsert->prefix);
+                    step += strlen(toInsert->prefix);
+                    
+                    for(int i = 0;i<strlen(toInsert->prefix);i++){
+                        currentWord[charToIndex(toInsert->prefix[i])]++;
+                    }
+                    
+                    continue;
+                }
+                
+                char *commonRadix = calloc(matching+2, 1);
+                commonRadix[matching+1] = 1;
+                
+                for(int i = 0; i<matching ;i++){
+                    commonRadix[i] = word[i];
+                    currentWord[charToIndex(word[i])]++;
+                    
+                    if(!charMatches[charToIndex(commonRadix[i])][i+step] || ( charExact[charToIndex(commonRadix[i])] && currentWord[charToIndex(commonRadix[i])] > charOccurrencies[charToIndex(commonRadix[i])] )){
+                        commonRadix[matching+1]=0;
+                    }
+                }
+                
+                commonRadix[matching] = 0;
+                
+                
+                char *newPartOldNode = calloc(strlen(toInsert->prefix)-matching+2, 1);
+                newPartOldNode[strlen(toInsert->prefix)-matching+1] = toInsert->prefix[strlen(toInsert->prefix)+1];
+                for(int i = 0;i<strlen(toInsert->prefix)-matching;i++){
+                    newPartOldNode[i] = toInsert->prefix[i+matching];
+                    currentWord[charToIndex(toInsert->prefix[i+matching])]++;
+                    
+                    if(!charMatches[charToIndex(newPartOldNode[i])][i+step+strlen(commonRadix)] || ( charExact[charToIndex(newPartOldNode[i])] && currentWord[charToIndex(newPartOldNode[i])] > charOccurrencies[charToIndex(newPartOldNode[i])] )){
+                        newPartOldNode[strlen(toInsert->prefix)-matching+1]=0;
+                    }
+                    
+                }
+                
+                
+                newPartOldNode[strlen(toInsert->prefix)-matching] = 0;
+                
+                for(int i = 0;i<strlen(toInsert->prefix)-matching;i++){
+                    currentWord[charToIndex(toInsert->prefix[i+matching])]--;
+                }
+                
+                char *newPartNewWord = calloc(strlen(word)-matching+2, 1);
+                newPartNewWord[strlen(word)-matching+1] = 1;
+                
+                for(int i=0; i < strlen(word)-matching; i++){
+                    newPartNewWord[i] = word[i+matching];
+                    currentWord[charToIndex(word[i+matching])]++;
+                    
+                    if(!charMatches[charToIndex(newPartNewWord[i])][i+step+strlen(commonRadix)] || (
+                       charExact[charToIndex(newPartNewWord[i])] && currentWord[charToIndex(newPartNewWord[i])] > charOccurrencies[charToIndex(newPartNewWord[i])] )){
+                        newPartNewWord[strlen(word)-matching+1] = 0;
+                    }
+                }
+                
+                newPartNewWord[strlen(word)-matching] = 0;
+                
+                if( newPartNewWord[strlen(word)-matching+1] ){
+                    for(int i = 0;i<N;i++){
+                        if(currentWord[i] < charOccurrencies[i]){
+                            newPartNewWord[strlen(word)-matching+1] = 0;
+                        }
+                    }
+                }
+                
+                free(toInsert->prefix);
+                toInsert->prefix = commonRadix;
+                
+                t_node *newPartNewWordNode = malloc(sizeof(t_node));
+                newPartNewWordNode->prefix = newPartNewWord;
+                newPartNewWordNode->son = NULL;
+                newPartNewWordNode->brother = NULL;
+                
+                t_node *newPartOldNodeNode = malloc(sizeof(t_node));
+                newPartOldNodeNode->prefix = newPartOldNode;
+                newPartOldNodeNode->son = toInsert->son;
+                newPartOldNodeNode->brother = NULL;
+                
+                
+                if(newPartNewWord[0] < newPartOldNode[0]){
+                    toInsert->son = newPartNewWordNode;
+                    newPartNewWordNode->brother = newPartOldNodeNode;
+                }
+                else{
+                    toInsert->son = newPartOldNodeNode;
+                    newPartOldNodeNode->brother = newPartNewWordNode;
+                }
+                
+                done=1;
+                step += strlen(word);
+                break;
+            }
+                
+            case 2:
+            {
+                t_node *new = malloc(sizeof(t_node));
+                new->son = NULL;
+                new->prefix = calloc(strlen(word)+2, 1);
+                new->prefix[strlen(word)+1] = 1;
+                
+                for(int i = 0;i<strlen(word);i++){
+                    new->prefix[i] = word[i];
+                    currentWord[charToIndex(word[i])]++;
+                    
+                    if(!charMatches[charToIndex(word[i])][i+step] || ( charExact[charToIndex(word[i])] && currentWord[charToIndex(word[i])] > charOccurrencies[charToIndex(word[i])] )){
+                        new->prefix[strlen(word)+1] = 0;
+                    }
+                }
+                
+                new->prefix[strlen(word)] = 0;
+                
+                new->brother = toInsert->son;
+                toInsert->son = new;
+                
+                if(new->prefix[strlen(new->prefix)+1]){
+                    for(int i = 0;i<N;i++){
+                        if(currentWord[i] < charOccurrencies[i]){
+                            new->prefix[strlen(new->prefix)+1] = 0;
+                            break;
+                        }
+                    }
+                }
+                
+                done=1;
+                break;
+            }
+                
+            case 3:
+            case 5:
+            {
+                t_node *new = malloc(sizeof(t_node));
+                new->son = NULL;
+                new->brother = NULL;
+                new->prefix = calloc(strlen(word)+2, 1);
+                new->prefix[strlen(word)+1] = 1;
+                
+                for(int i = 0;i<strlen(word);i++){
+                    new->prefix[i] = word[i];
+                    currentWord[charToIndex(word[i])]++;
+                    
+                    if(!charMatches[charToIndex(word[i])][i+step] || ( charExact[charToIndex(word[i])] && currentWord[charToIndex(word[i])] > charOccurrencies[charToIndex(word[i])] )){
+                        new->prefix[strlen(word)+1] = 0;
+                    }
+                }
+                
+                //strcpy(new->prefix, word);
+                new->prefix[strlen(word)] = 0;
+                
+                if(resGetMatched == 5){
+                    new->brother = toInsert->brother;
+                }
+                
+                toInsert->brother = new;
+                
+                if(new->prefix[strlen(new->prefix)+1]){
+                    for(int i = 0;i<N;i++){
+                        if(currentWord[i] < charOccurrencies[i]){
+                            new->prefix[strlen(new->prefix)+1] = 0;
+                            break;
+                        }
+                    }
+                }
+                
+                done=1;
+                break;
+            }
+                
+        }
+    }
+}
+
+void printTreeWordsRecCall(t_node *tree,int wordLen, int step, char *buffer){
+    if(step == wordLen){
+        
+        printf("%s\n",buffer);
         return;
     }
     
-    if(step == wordLen && !tree->hasChild){
-        
-        for(size_t i=0;i<N;i++){
-            if(currentWord[i] < charOccurrencies[i]){
+    t_node *curr = tree;
+    
+    while (curr) {
                 
-                tree->matches = 0;
+        if(curr->prefix[strlen(curr->prefix)+1]){ //Match
+            
+            strcpy(buffer+step, curr->prefix);
+            printTreeWordsRecCall(curr->son, wordLen, step + strlen(curr->prefix), buffer);
+            
+            buffer[step] = '\0';
+            
+            
+        }
+        curr=curr->brother;
+    }
+}
+
+void printTreeWords(t_node *tree,int wordLen){
+    
+    if(!tree || !tree->son){
+        return;
+    }
+    
+    int step = 0;
+    char *buffer = calloc(wordLen+1, 1);
+    
+    t_node *curr = tree->son;
+    
+    while (curr) {
+                
+        if(curr->prefix[strlen(curr->prefix)+1]){ //Match
+            
+            strcpy(buffer+step, curr->prefix);
+            printTreeWordsRecCall(curr->son, wordLen, step + strlen(curr->prefix), buffer);
+            buffer[0] = '\0';
+            
+            
+        }
+        curr=curr->brother;
+    }
+    
+    
+    
+    free(buffer);
+}
+
+void filterTreeRecCall(t_node *tree, int wordLen, int charOccurrencies[N], char charExact[N], char charMatches[N][wordLen], int step, int currentWord[N], char *buffer, int *validWords){
+    
+    
+    if(step == wordLen){
+        
+        for(int i=0;i<N;i++){
+            if(currentWord[i] < charOccurrencies[i]){
+                tree->prefix[strlen(tree->prefix)+1] = 0;
                 return;
             }
         }
         
-        if(tree->matches){
-            (*validWords)++;
-            return;
-        }
+        (*validWords)++;
+        return;
     }
-        
+    
     t_node *curr = tree->son;
     
-    while(curr != NULL){
-        
-        int index = charToIndex(curr->letter);
-        if(!charMatches[index][step] || (currentWord[index]+1 > charOccurrencies[index] && charExact[index]) ){
-            curr->matches = 0;
+    while (curr) {
+        int len = strlen(curr->prefix);
+                
+        if(curr->prefix[len+1]){ //Match
+            
+            buffer[step] = '\0';
+            //char charInPrefix[strlen(curr->prefix)];
+            int i = 0;
+            char proceed = 1;
+            for(i = 0;i<len;i++){
+                
+                if(!charMatches[charToIndex(curr->prefix[i])][step+i] || (charExact[charToIndex(curr->prefix[i])] && currentWord[charToIndex(curr->prefix[i])]+1 > charOccurrencies[charToIndex(curr->prefix[i])])){
+                    curr->prefix[len+1] = 0;
+                    proceed=0;
+                    break;
+                }
+                currentWord[charToIndex(curr->prefix[i])]++;
+                //charInPrefix[i] = curr->prefix[i];
+                buffer[step+i] = curr->prefix[i];
+            }
+            
+            if(proceed){
+                //strcpy(buffer+step, curr->prefix);
+                filterTreeRecCall(curr, wordLen, charOccurrencies, charExact, charMatches, step + len, currentWord, buffer, validWords);
+                
+            }
+            buffer[step] = '\0';
+            for(int j=0;j<i;j++){
+                //currentWord[charToIndex(charInPrefix[j])]--;
+                currentWord[charToIndex(curr->prefix[j])]--;
+
+            }
+            
+            
         }
-        else{
-            currentWord[index]++;
-            filterTreeRecCall(curr, wordLen, charOccurrencies, charExact, charMatches, step+1, currentWord,validWords);
-            currentWord[index]--;
-        }
-    
-        curr = curr->brother;
+        curr=curr->brother;
     }
-    
 }
 
-void filterTree(t_node *tree,int wordLen,u_short charOccurrencies[N],char charExact[N],char charMatches[N][wordLen]){
-    if(tree == NULL || tree->hasChild == 0){
+void filterTree(t_node *tree, int wordLen, int charOccurrencies[N], char charExact[N], char charMatches[N][wordLen],char print){
+    if(!tree || !tree->son){
         return;
     }
     
     int step = 0;
     int *validWords = calloc(1, sizeof(int));
+    char *buffer = calloc(wordLen+1, 1);
     
     t_node *curr = tree->son;
     
-    while(curr != NULL){
-        u_short currentWord[N] = {0};
-        int index = charToIndex(curr->letter);
-        if(!charMatches[index][step] || (currentWord[index]+1 > charOccurrencies[index] && charExact[index]) ){
-            curr->matches = 0;
+    while (curr) {
+                
+        int len = strlen(curr->prefix);
+        if(curr->prefix[len+1]){ //Match
+            
+            
+            buffer[0] = '\0';
+            int currentWord[N] = {0};
+            int i = 0;
+            char proceed = 1;
+            for(i = 0;i<len;i++){
+            
+                if(!charMatches[charToIndex(curr->prefix[i])][i] || (charExact[charToIndex(curr->prefix[i])] && currentWord[charToIndex(curr->prefix[i])]+1 > charOccurrencies[charToIndex(curr->prefix[i])])){
+                    curr->prefix[len+1] = 0;
+                    proceed=0;
+                    break;
+                }
+                currentWord[charToIndex(curr->prefix[i])]++;
+                buffer[i] = curr->prefix[i];
+            }
+            
+            if(proceed){
+                //strcpy(buffer, curr->prefix);
+                filterTreeRecCall(curr, wordLen, charOccurrencies, charExact, charMatches, step + len, currentWord, buffer, validWords);
+            }
+            buffer[0] = '\0';
         }
-        else{
-            currentWord[index]++;
-            filterTreeRecCall(curr, wordLen, charOccurrencies, charExact, charMatches, step+1, currentWord,validWords);
-        }
-    
-        curr = curr->brother;
+        curr=curr->brother;
     }
     
-    printf("%d\n",*validWords);
+    if(print){
+        printf("%d\n",*validWords);
+    }
+    free(buffer);
     free(validWords);
-    
 }
 
-int checkWord(const char *refWord,const char* toBeCheckedWord,int wordLen,t_node* tree, u_short charOccurrencies[N], char charExact[N], char charMatches[N][wordLen]){
+char isWordInTree(t_node *tree, const char *word){
     
-    u_short freeOccurrencies[N] = {0};
-    u_short currentWord[N] = {0};
-    char *buffer = calloc(wordLen+1, 1);
+    if(strlen(word) == 0){
+        return 1;
+    }
     
-    char won = 1;
+    if(!tree || !tree->son){
+        return 0;
+    }
     
-    t_node *curr = tree;
-    
-    for(size_t i = 0;i<wordLen;i++){
+    if(tree->son->prefix[0] == word[0]){
         
-        if((curr = lookForSuccessorInTree(curr, toBeCheckedWord[i])) == NULL){
-            free(buffer);
-            printf("not_exists\n");
-            return -1;
-        }
-        int index = charToIndex(toBeCheckedWord[i]);
-        
-        if(refWord[i] == toBeCheckedWord[i]){
-            buffer[i] = '+';
-            
-            currentWord[index]++;
-            /*for(size_t j=0;j<N;j++){
-                charMatches[j][i] = 0;
-            }
-            charMatches[index][i]=1;*/
+        if(strlen(tree->son->prefix) == matchingCharacters(tree->son->prefix, word)){
+            return isWordInTree(tree->son, word+strlen(tree->son->prefix));
         }
         else{
-            buffer[i] = '/';
-            won = 0;
-            freeOccurrencies[charToIndex(refWord[i])]++;
-            //charMatches[index][i]=0;
+            return 0;
         }
         
     }
+    else if(tree->son->prefix[0] > word[0]){
+        return 0;
+    }
+    else{
+        
+        t_node *curr = tree->son;
+        
+        while (curr->brother && curr->brother->prefix[0] < word[0]) {
+            curr = curr->brother;
+        }
+        
+        if(!curr->brother){
+            return 0;
+        }
+        else if(curr->brother->prefix[0] == word[0]){
+            if(strlen(curr->brother->prefix) == matchingCharacters(curr->brother->prefix, word)){
+                return isWordInTree(curr->brother, word+strlen(curr->brother->prefix));
+            }
+            else{
+                return 0;
+            }
+        }
+        else{
+            return 0;
+        }
+    }
     
-    for(size_t i=0;i<wordLen;i++){
-        switch(buffer[i]){
-            case '+':
-                for(size_t j=0;j<N;j++){
-                    charMatches[j][i] = 0;
-                }
-                charMatches[charToIndex(toBeCheckedWord[i])][i]=1;
-                break;
-            default:
-                charMatches[charToIndex(toBeCheckedWord[i])][i]=0;
-                break;
+    
+    return 0;
+}
+
+int checkWord(t_node *tree, const char* word, const char* refWord, int wordLen, int charOccurrencies[N], char charExact[N], char charMatches[N][wordLen]){
+    
+    if(!isWordInTree(tree,word)){
+        printf("not_exists\n");
+        return -1;
+    }
+    
+    char *buffer = calloc(wordLen+1, 1);
+    int freeOccurencies[N] = {0};
+    int currentWord[N] = {0};
+    char won = 1;
+    
+    for(int i = 0;i<wordLen;i++){
+        if(word[i] == refWord[i]){
+            buffer[i] = '+';
+            
+            for(int j=0;j<N;j++){
+                charMatches[j][i] = 0;
+            }
+            charMatches[charToIndex(word[i])][i] = 1;
+            currentWord[charToIndex(word[i])]++;
+        }
+        else{
+            won = 0;
+            buffer[i] = '/';
+            charMatches[charToIndex(word[i])][i] = 0;
+            freeOccurencies[charToIndex(refWord[i])]++;
         }
     }
     
     if(won){
-        free(buffer);
         printf("ok\n");
+        free(buffer);
         return 1;
     }
     
-    for(size_t i=0;i<wordLen;i++){
-        if(buffer[i] == '/' && freeOccurrencies[charToIndex(toBeCheckedWord[i])] > 0){
-            buffer[i] = '|';
-            currentWord[charToIndex(toBeCheckedWord[i])]++;
-            if(currentWord[charToIndex(toBeCheckedWord[i])] > charOccurrencies[charToIndex(toBeCheckedWord[i])]){
-                charOccurrencies[charToIndex(toBeCheckedWord[i])]=currentWord[charToIndex(toBeCheckedWord[i])];
+    for(int i = 0;i<wordLen;i++){
+        if(buffer[i] == '/'){
+            if(freeOccurencies[charToIndex(word[i])] > 0){
+                buffer[i] = '|';
+                freeOccurencies[charToIndex(word[i])]--;
+                currentWord[charToIndex(word[i])]++;
+                
+                if(currentWord[charToIndex(word[i])] > charOccurrencies[charToIndex(word[i])]){
+                    charOccurrencies[charToIndex(word[i])]=currentWord[charToIndex(word[i])];
+                }
             }
-            freeOccurrencies[charToIndex(toBeCheckedWord[i])]--;
+            else{
+                charExact[charToIndex(word[i])] = 1;
+                charOccurrencies[charToIndex(word[i])]=currentWord[charToIndex(word[i])];
+            }
         }
-        else if(buffer[i] == '/'){
-            charExact[charToIndex(toBeCheckedWord[i])] = 1;
-            charOccurrencies[charToIndex(toBeCheckedWord[i])]=currentWord[charToIndex(toBeCheckedWord[i])];
-        }
-            
     }
     
     printf("%s\n",buffer);
     
-    filterTree(tree, wordLen, charOccurrencies, charExact, charMatches);
+    filterTree(tree, wordLen, charOccurrencies, charExact, charMatches,1);
+    
     
     free(buffer);
+    
     return 0;
-    
-}
-
-void insertWordFiltered(t_node *tree, const char* word,int wordLen,u_short charOccurrencies[N],char charExact[N],char charMatches[N][wordLen]){
-    if(tree == NULL){
-        return;
-    }
-    
-    t_node *curr = tree;
-    int currentWord[N] = {0};
-    
-    for(size_t i=0;i<wordLen;i++){
-        
-        char c = word[i];
-        size_t index = charToIndex(c);
-        currentWord[index]++;
-        
-        t_node *new = (t_node *)malloc(sizeof(t_node));
-        new->hasChild=0;
-        new->hasBrother = 0;
-        new->matches = 1;
-        if(!charMatches[index][i] || (currentWord[index] > charOccurrencies[index] && charExact[index])){
-            new->matches = 0;
-        }
-        
-        new->son = NULL;
-        new->brother = NULL;
-        new->letter = word[i];
-        
-        
-        //Il nodo non ha ancora figli
-        if(curr->son == NULL){
-            curr->hasChild = 1;
-            curr->son = new;
-            curr = new;
-            continue;
-        }
-        
-        //Il nodo ha figli,controllo se la nuova lettera è precedente al primo figlio
-        if(word[i] < curr->son->letter){
-            new->hasBrother = 1;
-            new->brother = curr->son;
-            curr->son = new;
-            curr = new;
-
-        }
-        else if(word[i] == curr->son->letter){ //la nuova lettera è già presente ed è la prima
-            free(new);
-            curr = curr->son;
-            continue;
-        }
-        else{ //La nuova lettera va accodata perchè non è la prima in ordine alfabetico
-            t_node *appoggio = curr->son;
-            
-            //Mi fermo quando sono arrivato all'ultimo figlio o il successivo è dopo in ordine alfabetico
-            while(appoggio->hasBrother && appoggio->brother->letter < word[i]){
-                appoggio = appoggio->brother;
-            }
-            
-            if(appoggio->hasBrother){ //Il successivo è >= in ordine alfabetico alla nuova lettera
-                
-                if(appoggio->brother->letter == word[i]){ //La nuova lettera c'è già ed è il successivo
-                    free(new);
-                    curr = appoggio->brother;
-                    continue;
-                }
-                
-                //Il nodo successivo segue il carattere da aggiungere
-                new->hasBrother = 1;
-                new->brother = appoggio->brother;
-                
-            }
-            else{
-                //Il nodo successivo segue il carattere da aggiungere
-                appoggio->hasBrother = 1;
-            }
-            appoggio->brother = new;
-            curr=new;
-            
-        }
-    }
-    
-    for(size_t j = 0;j<N;j++){
-        if(currentWord[j] < charOccurrencies[j]){
-            curr->matches = 0;
-            break;
-        }
-    }
 }
 
 void cleanTreeMatches(t_node *tree, int wordLen,int step){
-    if(tree == NULL || !tree->hasChild){
+    if(tree == NULL){
         return;
     }
     
     t_node *curr = tree->son;
     
     while(curr != NULL){
-        curr->matches = 1;
+        curr->prefix[strlen(curr->prefix)+1] = 1;
         cleanTreeMatches(curr, wordLen, step+1);
         curr = curr->brother;
     }
@@ -467,7 +786,7 @@ void cleanTreeMatches(t_node *tree, int wordLen,int step){
     
 }
 
-void newGame(t_node *tree, int wordLen,char charMatches[N][wordLen],u_short charOccurrencies[N],char charExact[N]){
+void newGame(t_node *tree, int wordLen,char charMatches[N][wordLen],int charOccurrencies[N],char charExact[N]){
     for(size_t i=0;i<N;i++){
         charOccurrencies[i] = 0;
         charExact[i] = 0;
@@ -483,12 +802,12 @@ int main(int argc, const char * argv[]) {
     // insert code here...
     
     char nullScanfValue;
-    int wordLen = -1;
+    int wordLen = 5;
     nullScanfValue=scanf("%d", &wordLen);
     
     //Creo e inizializzo strutture di controllo
     char charMatches[N][wordLen];
-    u_short charOccurrencies[N] = {0};
+    int charOccurrencies[N] = {0};
     char charExact[N] = {0};
     
     for(size_t i=0;i<N;i++){
@@ -498,12 +817,12 @@ int main(int argc, const char * argv[]) {
     }
     
     //Alloco albero
-    t_node* tree = (t_node *)malloc(sizeof(t_node));
-    tree->hasChild = 0;
-    tree->hasBrother = 0;
-    tree->matches = 1;
-    tree->son = NULL;
+    t_node *tree = malloc(sizeof(tree));
+    tree->prefix = calloc(2, 1);
+    tree->prefix[0] = '~';
     tree->brother = NULL;
+    tree->son = NULL;
+    
     
     char *buffer;
     if(wordLen > COMMAND_LEN){
@@ -512,39 +831,22 @@ int main(int argc, const char * argv[]) {
     else{
         buffer = calloc(COMMAND_LEN+1, 1);
     }
-    
-    /*ADD HERE
-    FILE * fp;
-    char * line = NULL;
-    size_t len = 0;
-    ssize_t read;
 
-    fp = fopen("/Users/japo/Desktop/Università/API/TEST/words.txt", "r");
-    if (fp == NULL)
-        exit(EXIT_FAILURE);
-
-    while ((read = getline(&line, &len, fp)) != -1) {
-        insertWord(tree, line);
-    }
-
-    fclose(fp);
-    if (line)
-        free(line);
-    printf("finito\n");
-    FINISH HERE*/
-    
     while(1){
         nullScanfValue=scanf("%s",buffer);
-        if(strcmp(buffer, COMMAND_NG) == 0){
-            break;
+        if(buffer[0] == '+'){
+            if(buffer[0] == '+' && strCmpPersonal(buffer, COMMAND_NG) == 0){
+                break;
+            }
+            continue;
         }
-        insertWord(tree, buffer);
-        //addWordToTree(tree, buffer);
+    
+        insertWordIterative(tree, buffer);
+        //insertWord(tree, buffer);
     }
-    
-   
-    
+
     char new_game = 1;
+    tree = tree;
     
     int tries = - 1;
     char won = 0;
@@ -555,26 +857,26 @@ int main(int argc, const char * argv[]) {
         
         nullScanfValue=scanf("%s",refWord);
         nullScanfValue=scanf("%d",&tries);
-        
+
         while(!won && tries > 0){
             nullScanfValue=scanf("%s",buffer);
-            if(strcmp(buffer, COMMAND_IS) == 0){
+            if(buffer[0] == '+' && strCmpPersonal(buffer, COMMAND_IS) == 0){
                 
                 while(1){
                     nullScanfValue=scanf("%s",buffer);
-                    if(strcmp(buffer, COMMAND_IE) == 0){
+                    if(buffer[0] == '+' && strCmpPersonal(buffer, COMMAND_IE) == 0){
+                        //filterTree(tree, wordLen, charOccurrencies, charExact, charMatches,0);
                         break;
                     }
-                    //addWordToTreeFiltered(tree, buffer, wordLen, charMatches, charOccurrencies, charExact);
-                    insertWordFiltered(tree, buffer, wordLen, charOccurrencies, charExact, charMatches);
+                    //insertWordIterative(tree, buffer);
+                    insertWordFilteredIterative(tree, buffer, wordLen, charOccurrencies, charExact, charMatches);
                 }
             }
-            else if(strcmp(buffer, COMMAND_FP) == 0){
-                printWords(tree, wordLen);
+            else if(buffer[0] == '+' && strCmpPersonal(buffer, COMMAND_FP) == 0){
+                printTreeWords(tree, wordLen);
             }
             else{
-                size_t res = checkWord(refWord, buffer, wordLen, tree, charOccurrencies, charExact, charMatches);
-                //size_t res = checkWord(refWord, buffer, wordLen, charMatches, charOccurrencies, charExact, tree);
+                size_t res = checkWord(tree, buffer, refWord, wordLen, charOccurrencies, charExact, charMatches);
                 if(res == 1){
                     won=1;
                     break;
@@ -592,27 +894,26 @@ int main(int argc, const char * argv[]) {
         
         while(1){
             nullScanfValue=scanf("%s",buffer);
-            if(strcmp(buffer, COMMAND_NG) == 0){
+            if(buffer[0] == '+' && strCmpPersonal(buffer, COMMAND_NG) == 0){
                 new_game = 1;
                 //Clean tree and filters
                 newGame(tree, wordLen, charMatches, charOccurrencies, charExact);
                 break;
             }
-            else if(strcmp(buffer, COMMAND_IS) == 0){
+            else if(buffer[0] == '+' && strCmpPersonal(buffer, COMMAND_IS) == 0){
                 while(1){
                     nullScanfValue=scanf("%s",buffer);
-                    if(strcmp(buffer, COMMAND_IE) == 0){
+                    if(buffer[0] == '+' && strCmpPersonal(buffer, COMMAND_IE) == 0){
                         break;
                     }
-                    //addWordToTree(tree, buffer);
-                    insertWord(tree, buffer);
+                    insertWordIterative(tree, buffer);
+                    //insertWord(tree, buffer);
                 }
             }
             else{
                 break;
             }
         }
-        
         
     }
     
@@ -622,64 +923,6 @@ int main(int argc, const char * argv[]) {
     if(nullScanfValue == 0){
         nullScanfValue=0;
     }
-    
-    
-    return 0;
-    
-    
-    
-    
-    
-    /*int wordLen = 5;
-    u_short charOccurrencies[N] = {0};
-    char charExact[N] = {0};
-    char charMatches[N][wordLen];
-    
-    for(size_t i=0;i<N;i++){
-        for(size_t j=0;j<wordLen;j++){
-            charMatches[i][j] = 1;
-        }
-    }
-    
-    t_node* tree = (t_node *)malloc(sizeof(t_node));
-    tree->hasChild = 0;
-    tree->hasBrother = 0;
-    tree->matches = 1;
-    tree->son = NULL;
-    tree->brother = NULL;
-    
-    
-    
-    insertWord(tree, "8adfs");
-    insertWord(tree, "5sjaH");
-    insertWord(tree, "KS06l");
-    insertWord(tree, "Hi23a");
-    insertWord(tree, "laj74");
-    insertWord(tree, "-s9k0");
-    insertWord(tree, "sm_ks");
-    insertWord(tree, "okauE");
-
-    char *refWord = "5sjaH";
-    
-    
-    checkWord(refWord, "KS06l", wordLen, tree, charOccurrencies, charExact, charMatches);
-    checkWord(refWord, "had7s", wordLen, tree, charOccurrencies, charExact, charMatches);
-    checkWord(refWord, "okauE", wordLen, tree, charOccurrencies, charExact, charMatches);
-
-    printWords(tree, wordLen);
-    
-    insertWordFiltered(tree, "PsjW5", wordLen, charOccurrencies, charExact, charMatches);
-    insertWordFiltered(tree, "asHdd", wordLen, charOccurrencies, charExact, charMatches);
-    insertWordFiltered(tree, "paF7s", wordLen, charOccurrencies, charExact, charMatches);
-    
-    checkWord(refWord, "-s9k0", wordLen, tree, charOccurrencies, charExact, charMatches);
-    checkWord(refWord, "sghks", wordLen, tree, charOccurrencies, charExact, charMatches);
-
-    printWords(tree, wordLen);
-    
-    checkWord(refWord, "sm_ks", wordLen, tree, charOccurrencies, charExact, charMatches);
-    */
-    
     
     return 0;
 }
