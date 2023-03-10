@@ -31,3 +31,13 @@ If the system reads the instruction "+stampa_filtrate", the system prints by lex
 If the system reads the instruction "+inserisci_inizio", it will start reading a new sequence of words to add to the allowed words in the dictionary, until it will read "+inserisci_fine" (HP: no duplicates).<br/>
 In the sequence of words to compare, if the system reads an attempted word which is not allowed, it prints "not_exists". If the system reads the reference word, it prints "ok". If the system reads $n$ allowed words which were not the reference word, it prints "ko".<br/>
 When the game ends, it can only read "+nuova_partita" to start a new game or "+inserisci_inizio" to insert more words into the dictionary.<br/>
+
+# Data Structure
+
+I decided to implement the dictionary using a Radix Tree, as this structure allows to store and look for words efficiently.
+This choice allowed me to:
+1. Look for a word, or its presence, in the dictionary in $O(k)$;
+2. Add a new word in the dictionary in $O(k)$;
+3. Apply filters efficiently during a game. Thanks to this structure, it is possivile to filter whole sub-tries as soon as the first mis-matched letter is encountered.
+
+
