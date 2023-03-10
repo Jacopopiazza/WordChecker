@@ -1,4 +1,6 @@
-# Word-checker
+# WordChecker
+
+#Data Structures & Algorithms Final Exam Polimi A.A. 2021/22
 
 ## Warning
 
