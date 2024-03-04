@@ -3,6 +3,9 @@
 # Data Structures and Algorithms 2021/22 - Polimi
 Prova finale Algoritmi e Strutture Dati
 
+## Grade
+30 / 30 with honors
+
 ## Warning
 
 This code is not meant to be a final product. Through this code, it is possible to easily implement a game such as Wordle, but:
